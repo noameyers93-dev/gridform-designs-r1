@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Gridform — Brand & Product System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  @font-face {
+    font-family: 'Condor';
+    src: url('fonts/Condor-WideRegular-Testing.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Libre Franklin';
+    src: url('fonts/LibreFranklin-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Lilex';
+    src: url('fonts/Lilex-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  html, body { margin: 0; padding: 0; background: #050710; font-family: 'Libre Franklin', system-ui, sans-serif; color: #F4F1EA; }
+  *, *::before, *::after { box-sizing: border-box; }
+  /* Canvas surface tweak so dark artboards float on near-black */
+  .design-canvas-bg { background: #050710 !important; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="gridform-icons.jsx"></script>
+<script type="text/babel" src="gridform-system.jsx"></script>
+<script type="text/babel" src="gridform-screens.jsx"></script>
+<script type="text/babel" src="gridform-mobile.jsx"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useEffect, useState } = React;
+
+// Tweak defaults — host writes back through these markers on persist.
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "chartreuse",
+  "radius": "soft",
+  "iconStroke": 1.75
+}/*EDITMODE-END*/;
+
+// Radius presets — pulled from the logo's pixel-corner curvature
+const RADIUS_PRESETS = {
+  sharp:   { xs: 0,  sm: 0,  md: 0,  lg: 0,  xl: 0,  pill: 999 },
+  soft:    { xs: 6,  sm: 10, md: 14, lg: 20, xl: 28, pill: 999 },
+  pillowy: { xs: 10, sm: 16, md: 22, lg: 32, xl: 44, pill: 999 },
+};
+
+const ACCENT_PRESETS = {
+  chartreuse: { chartreuse: "#C6FF3D", chartreuseDeep: "#A6E300" },
+  electric:   { chartreuse: "#7C5CFF", chartreuseDeep: "#5B3FE0" },
+  magenta:    { chartreuse: "#FF3DCB", chartreuseDeep: "#E000A8" },
+  acid:       { chartreuse: "#E6FD13", chartreuseDeep: "#C6DE00" },
+};
+
+// Stash originals so we can restore cleanly when tweaks change.
+const ORIGINAL_GF = { ...window.GF };
+const ORIGINAL_R = { ...window.R };
+
+function applyTweaks(t) {
+  // mutate in place — components read these properties on each render
+  Object.assign(window.GF, ORIGINAL_GF, ACCENT_PRESETS[t.accent] || {});
+  Object.assign(window.R, ORIGINAL_R, RADIUS_PRESETS[t.radius] || {});
+  // icon stroke
+  if (window.I && window.STROKE_REF) {
+    window.STROKE_REF.strokeWidth = t.iconStroke;
+  }
+}
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  // Apply tweaks before render so artboards pick up the mutated tokens.
+  applyTweaks(t);
+  // Bump key to force a full re-render so memoized inline styles refresh.
+  const renderKey = `${t.accent}-${t.radius}-${t.iconStroke}`;
+
+  useEffect(() => {
+    document.body.style.background = "#050710";
+  }, []);
+
+  return (
+    <React.Fragment>
+      <DesignCanvas key={renderKey} projectName="Gridform — Brand & Product System">
+        <DCSection id="brand" title="Brand">
+          <DCArtboard id="foundations" label="01 — Foundations" width={1440} height={900}>
+            <FoundationsArtboard />
+          </DCArtboard>
+          <DCArtboard id="color" label="02 — Color tokens" width={1440} height={1200}>
+            <ColorArtboard />
+          </DCArtboard>
+          <DCArtboard id="type" label="03 — Type scale" width={1440} height={2900}>
+            <TypeArtboard />
+          </DCArtboard>
+          <DCArtboard id="icons" label="04 — Iconography" width={1440} height={1700}>
+            <IconsArtboard />
+          </DCArtboard>
+          <DCArtboard id="components" label="05 — Component library" width={1440} height={1900}>
+            <ComponentsArtboard />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="product" title="Product · Reimagined screens">
+          <DCArtboard id="homepage" label="Homepage — hero + how it works" width={1440} height={1700}>
+            <HomepageArtboard />
+          </DCArtboard>
+          <DCArtboard id="configurator" label="Configurator — live 3D viewer" width={1440} height={900}>
+            <ConfiguratorArtboard />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="mobile" title="Mobile · Configurator">
+          <DCArtboard id="mobile-dividers" label="Mobile — Step 02 Dividers" width={460} height={920}>
+            <div style={{ display: "flex", justifyContent: "center", padding: 24, background: "#050710", height: "100%" }}>
+              <MobileDividersArtboard />
+            </div>
+          </DCArtboard>
+          <DCArtboard id="mobile-review" label="Mobile — Step 06 Review & Order" width={460} height={920}>
+            <div style={{ display: "flex", justifyContent: "center", padding: 24, background: "#050710", height: "100%" }}>
+              <MobileReviewArtboard />
+            </div>
+          </DCArtboard>
+          <DCArtboard id="mobile-viewer" label="Mobile — Full 3D Live Viewer" width={460} height={920}>
+            <div style={{ display: "flex", justifyContent: "center", padding: 24, background: "#050710", height: "100%" }}>
+              <MobileViewerArtboard />
+            </div>
+          </DCArtboard>
+          <DCArtboard id="mobile-viewer-v2" label="Mobile — Full 3D Live Viewer · cleaner" width={460} height={920}>
+            <div style={{ display: "flex", justifyContent: "center", padding: 24, background: "#050710", height: "100%" }}>
+              <MobileViewerArtboardV2 />
+            </div>
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Accent color">
+          <TweakColor
+            value={t.accent}
+            onChange={(v) => setTweak("accent", v)}
+            options={[
+              { value: "chartreuse", color: "#C6FF3D", label: "Chartreuse" },
+              { value: "electric",   color: "#7C5CFF", label: "Electric" },
+              { value: "magenta",    color: "#FF3DCB", label: "Magenta" },
+              { value: "acid",       color: "#E6FD13", label: "Acid" },
+            ]}
+          />
+        </TweakSection>
+
+        <TweakSection title="Corner radius">
+          <TweakRadio
+            value={t.radius}
+            onChange={(v) => setTweak("radius", v)}
+            options={[
+              { value: "sharp",   label: "Sharp" },
+              { value: "soft",    label: "Soft" },
+              { value: "pillowy", label: "Pillowy" },
+            ]}
+          />
+        </TweakSection>
+
+        <TweakSection title="Icon stroke">
+          <TweakSlider
+            value={t.iconStroke}
+            onChange={(v) => setTweak("iconStroke", v)}
+            min={1} max={2.5} step={0.25}
+            suffix="px"
+          />
+        </TweakSection>
+      </TweaksPanel>
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
